@@ -1,19 +1,17 @@
 use actix_web::{web::Data, App, HttpServer};
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
 
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use dotenv::dotenv;
 use std::env;
 
-mod shortener;
-use shortener::services;
+mod services;
+use services::main::config;
 
 mod database;
 
 struct AppState {
-    shortened_urls: Mutex<Vec<Url>>,
     db: Pool<Postgres>,
 }
 
@@ -30,18 +28,13 @@ async fn main() -> std::io::Result<()> {
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL environment variable not found.");
 
-    println!("{}", db_url);
-
     let pool = PgPoolOptions::new()
         .max_connections(2)
         .connect(&db_url)
         .await
         .expect("Error building db connection pool.");
 
-    let app_data = Data::new(AppState {
-        shortened_urls: Mutex::new(vec![]),
-        db: pool.clone(),
-    });
+    let app_data = Data::new(AppState { db: pool.clone() });
 
     let address: String =
         env::var("SERVER_ADDRESS").expect("SERVER_ADDRESS environment variable not found.");
@@ -50,12 +43,8 @@ async fn main() -> std::io::Result<()> {
         .parse()
         .expect("SERVER_PORT environment variable not found.");
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(app_data.clone())
-            .configure(services::config)
-    })
-    .bind((address, port))?
-    .run()
-    .await
+    HttpServer::new(move || App::new().app_data(app_data.clone()).configure(config))
+        .bind((address, port))?
+        .run()
+        .await
 }

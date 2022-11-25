@@ -5,5 +5,5 @@ use sqlx::{self, FromRow};
 pub struct UrlModel {
     pub id: String,
     pub url: String,
-    pub date: i64,
+    pub date: i32,
 }
