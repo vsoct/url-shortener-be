@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
 use dotenv::dotenv;
-// use std::env;
+use std::env;
 
 mod shortener;
 use shortener::services;
@@ -14,9 +14,8 @@ struct AppState {
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Url {
-    id: i32,
+    id: String,
     url: String,
-    short: String,
     date: i64,
 }
 
@@ -24,21 +23,23 @@ struct Url {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
-    // println!(
-    //     "DATABASE_URL: {:?}",
-    //     env::var("DATABASE_URL").expect("DATABASE_URL environment variable not found.")
-    // );
-
     let app_data = web::Data::new(AppState {
         shortened_urls: Mutex::new(vec![]),
     });
+
+    let address: String =
+        env::var("SERVER_ADDRESS").expect("SERVER_ADDRESS environment variable not found.");
+    let port: u16 = env::var("SERVER_PORT")
+        .unwrap()
+        .parse()
+        .expect("SERVER_PORT environment variable not found.");
 
     HttpServer::new(move || {
         App::new()
             .app_data(app_data.clone())
             .configure(services::config)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind((address, port))?
     .run()
     .await
 }
