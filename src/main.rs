@@ -1,6 +1,8 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{web::Data, App, HttpServer};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
+
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use dotenv::dotenv;
 use std::env;
@@ -8,8 +10,11 @@ use std::env;
 mod shortener;
 use shortener::services;
 
+mod database;
+
 struct AppState {
     shortened_urls: Mutex<Vec<Url>>,
+    db: Pool<Postgres>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -23,8 +28,20 @@ struct Url {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
-    let app_data = web::Data::new(AppState {
+    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL environment variable not found.");
+
+    println!("{}", db_url);
+
+    let pool = PgPoolOptions::new()
+        .max_connections(2)
+        // .connect(&db_url)
+        .connect("postgresql://postgres:postgres@127.0.0.1:5432/shortener")
+        .await
+        .expect("Error building db connection pool.");
+
+    let app_data = Data::new(AppState {
         shortened_urls: Mutex::new(vec![]),
+        db: pool.clone(),
     });
 
     let address: String =

@@ -1,6 +1,9 @@
 use std::{env, sync::MutexGuard};
 
-use super::models::CreateUrlData;
+use super::structs::CreateUrlData;
+
+use super::super::database::models::UrlModel;
+
 use crate::{AppState, Url};
 
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
@@ -59,7 +62,15 @@ async fn expand_url(data: web::Data<AppState>, path: web::Path<String>) -> impl 
 
 #[get("/admin/urls")]
 async fn get_urls(data: web::Data<AppState>) -> impl Responder {
-    HttpResponse::Ok().json(data.shortened_urls.lock().unwrap().to_vec())
+    // HttpResponse::Ok().json(data.shortened_urls.lock().unwrap().to_vec())
+
+    match sqlx::query_as::<_, UrlModel>("SELECT id FROM urls")
+        .fetch_all(&data.db)
+        .await
+    {
+        Ok(urls) => HttpResponse::Ok().json(urls),
+        Err(_) => HttpResponse::NotFound().json("No urls found."),
+    }
 }
 
 #[delete("/admin/urls/{id}")]
