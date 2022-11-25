@@ -3,16 +3,26 @@ services:
   # Local development
   database:
     image: postgres
-    container_name: shortener-db
+    container_name: postgres
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
+      - APP_DB_NAME=shortener-db
       # - POSTGRES_MULTIPLE_DATABASES=banq-db-test,banq-db
     ports:
-      - '5432:5432'
-    volumes:
-      - ./.db/data:/var/lib/postgresql/data:delegated
+      - '5433:5432'
+    # volumes:
+      # - ./.db/data:/var/lib/postgresql/data:delegated
       # - ./.db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=mail@mailinator.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    ports:
+      - '5555:80'

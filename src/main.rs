@@ -34,8 +34,7 @@ async fn main() -> std::io::Result<()> {
 
     let pool = PgPoolOptions::new()
         .max_connections(2)
-        // .connect(&db_url)
-        .connect("postgresql://postgres:postgres@127.0.0.1:5432/shortener")
+        .connect(&db_url)
         .await
         .expect("Error building db connection pool.");
 
