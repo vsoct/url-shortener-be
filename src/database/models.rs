@@ -1,3 +1,4 @@
+use chrono::{serde::ts_seconds_option, DateTime, Utc};
 use serde::Serialize;
 use sqlx::{self, FromRow};
 
@@ -5,5 +6,6 @@ use sqlx::{self, FromRow};
 pub struct UrlModel {
     pub id: String,
     pub url: String,
-    pub created_at: i32,
+    #[serde(with = "ts_seconds_option")]
+    pub created_at: Option<DateTime<Utc>>,
 }

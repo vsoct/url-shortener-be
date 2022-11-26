@@ -6,8 +6,6 @@ use super::structs::CreateUrlData;
 use crate::AppState;
 
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
-use chrono::Utc;
-// use chrono::prelude::*;
 use nanoid::nanoid;
 use serde_json::json;
 
@@ -35,11 +33,10 @@ async fn create_url(data: web::Data<AppState>, body: web::Json<CreateUrlData>) -
     }
 
     match sqlx::query_as::<_, UrlModel>(
-        "INSERT INTO shortened_urls (id, url, created_at) VALUES ($1, $2, $3) RETURNING id, url, created_at",
+        "INSERT INTO shortened_urls (id, url) VALUES ($1, $2) RETURNING id, url, created_at",
     )
     .bind(nanoid!(10))
     .bind(body.url.to_string())
-    .bind(Utc::now().timestamp())
     .fetch_one(&data.db)
     .await
     {
@@ -47,7 +44,6 @@ async fn create_url(data: web::Data<AppState>, body: web::Json<CreateUrlData>) -
             "short_url": format_shortened_url(shortened_url.id)
         })),
         Err(_) => HttpResponse::InternalServerError().json("Could not shorten url."),
-        // Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
     }
 }
 
