@@ -6,7 +6,8 @@ use super::structs::CreateUrlData;
 use crate::AppState;
 
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
-use chrono::prelude::*;
+use chrono::Utc;
+// use chrono::prelude::*;
 use nanoid::nanoid;
 use serde_json::json;
 
@@ -21,25 +22,24 @@ async fn create_url(data: web::Data<AppState>, body: web::Json<CreateUrlData>) -
      * Check if the long url already exist in the database,
      * and return the shortened url instead of creating a new one
      */
-    if let Ok(shortened_url) =
-        sqlx::query_as::<_, UrlModel>("SELECT id, url, date FROM shortened_urls WHERE url = $1")
-            .bind(body.url.to_string())
-            .fetch_one(&data.db)
-            .await
+    if let Ok(shortened_url) = sqlx::query_as::<_, UrlModel>(
+        "SELECT id, url, created_at FROM shortened_urls WHERE url = $1",
+    )
+    .bind(body.url.to_string())
+    .fetch_one(&data.db)
+    .await
     {
         return HttpResponse::Ok().json(json!({
             "short_url": format_shortened_url(shortened_url.id)
         }));
     }
 
-    let now = Utc::now();
-
     match sqlx::query_as::<_, UrlModel>(
-        "INSERT INTO shortened_urls (id, url, date) VALUES ($1, $2, $3) RETURNING id, url, date",
+        "INSERT INTO shortened_urls (id, url, created_at) VALUES ($1, $2, $3) RETURNING id, url, created_at",
     )
     .bind(nanoid!(10))
     .bind(body.url.to_string())
-    .bind(now.timestamp())
+    .bind(Utc::now().timestamp())
     .fetch_one(&data.db)
     .await
     {
@@ -47,6 +47,7 @@ async fn create_url(data: web::Data<AppState>, body: web::Json<CreateUrlData>) -
             "short_url": format_shortened_url(shortened_url.id)
         })),
         Err(_) => HttpResponse::InternalServerError().json("Could not shorten url."),
+        // Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
     }
 }
 
@@ -54,10 +55,12 @@ async fn create_url(data: web::Data<AppState>, body: web::Json<CreateUrlData>) -
 async fn expand_url(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
     let id = path.into_inner();
 
-    match sqlx::query_as::<_, UrlModel>("SELECT id, url, date FROM shortened_urls WHERE id = $1")
-        .bind(id)
-        .fetch_one(&data.db)
-        .await
+    match sqlx::query_as::<_, UrlModel>(
+        "SELECT id, url, created_at FROM shortened_urls WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&data.db)
+    .await
     {
         Ok(shortened_url) => HttpResponse::Found()
             .append_header(("Location", shortened_url.url))
@@ -68,7 +71,7 @@ async fn expand_url(data: web::Data<AppState>, path: web::Path<String>) -> impl 
 
 #[get("/admin/urls")]
 async fn get_urls(data: web::Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, UrlModel>("SELECT id, url, date FROM shortened_urls")
+    match sqlx::query_as::<_, UrlModel>("SELECT id, url, created_at FROM shortened_urls")
         .fetch_all(&data.db)
         .await
     {
