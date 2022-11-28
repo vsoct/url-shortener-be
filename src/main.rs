@@ -36,12 +36,11 @@ async fn main() -> std::io::Result<()> {
 
     let app_data = Data::new(AppState { db: pool.clone() });
 
-    let address: String =
-        env::var("SERVER_ADDRESS").expect("SERVER_ADDRESS environment variable not found.");
-    let port: u16 = env::var("SERVER_PORT")
+    let address: String = env::var("HOST").expect("HOST environment variable not found.");
+    let port: u16 = env::var("PORT")
         .unwrap()
         .parse()
-        .expect("SERVER_PORT environment variable not found.");
+        .expect("PORT environment variable not found.");
 
     HttpServer::new(move || App::new().app_data(app_data.clone()).configure(config))
         .bind((address, port))?
