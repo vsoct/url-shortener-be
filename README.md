@@ -2,6 +2,10 @@
 
 Getting our hands wet by learning how to build a URL shortener with Rust🦀
 
+## API Endpoint
+
+<https://url-shortener-vs.herokuapp.com>
+
 ## Available routes
 
 | Route | Method | Description | Working |
@@ -14,8 +18,8 @@ Getting our hands wet by learning how to build a URL shortener with Rust🦀
 
 ## .env
 
-`
+```.env
 BASE_URL=http://127.0.0.1:8080
-SERVER_ADDRESS=127.0.0.1
-SERVER_PORT=8080
-`
+HOST=127.0.0.1
+PORT=8080
+```
