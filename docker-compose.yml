@@ -17,12 +17,3 @@ services:
       - ./.db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=mail@villagesquare.com
-      - PGADMIN_DEFAULT_PASSWORD=password
-    ports:
-      - '5555:80'

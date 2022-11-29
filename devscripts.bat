@@ -7,3 +7,6 @@ cargo watch -x check -x run
 @REM Check the IP address postgres is running on in docker 
 @REM to know where to point server in pgadmin
 cat /etc/hosts
+
+@REM Push current dev branch to heroku master
+git push heroku $(git branch --show-current):master
