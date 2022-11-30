@@ -1,4 +1,7 @@
-// use super::models::UrlModel;
+use actix_web::Error;
+use sqlx::{Pool, Postgres};
+
+use super::models::UrlModel;
 
 // use crate::AppState;
 
@@ -15,3 +18,11 @@
 //         Err(_) =>
 //     }
 // }
+
+pub async fn list_shortened_urls(pool: &mut Pool<Postgres>) -> Result<Vec<UrlModel>, Error> {
+    let urls = sqlx::query_as::<_, UrlModel>("SELECT id, url, created_at FROM shortened_urls")
+        .fetch_all(&*pool)
+        .await;
+
+    Ok(urls.unwrap())
+}
